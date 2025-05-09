@@ -1,19 +1,48 @@
 import React, { useState, useEffect } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { supabase } from '../src/lib/supabase'; // Import your Supabase client
 
 export default function Header({ isDarkMode, toggleDarkMode }) {
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null); // Optional: store user info
   const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => setScrollPosition(window.scrollY);
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    
+    // Check auth status with Supabase
+    const checkAuthStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsLoggedIn(!!user);
+      setUser(user); // Optional: store user info
+    };
+    
+    checkAuthStatus();
+    
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsLoggedIn(!!session?.user);
+      setUser(session?.user || null);
+    });
+    
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      subscription?.unsubscribe(); // Clean up the listener
+    };
   }, []);
 
   const signinToggle = () => navigate("/Auth");
   const signupToggle = () => navigate("/Auth");
+  const dashboardToggle = () => navigate("/dashboard");
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsLoggedIn(false);
+    setUser(null);
+    navigate("/"); // Optional: redirect to home after logout
+  };
 
   const navItems = [
     { name: "Templates", to: "/templates" },
@@ -76,25 +105,51 @@ export default function Header({ isDarkMode, toggleDarkMode }) {
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
-          {/* Sign In / Sign Up Buttons */}
-          <div className="flex items-center gap-4">
-            <button
-              onClick={signinToggle}
-              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-100"
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              onClick={signupToggle}
-              className={`px-4 py-2 rounded-lg font-medium text-white transition-all duration-200 ${
-                isDarkMode ? "bg-blue-600 hover:bg-blue-700" : "bg-blue-500 hover:bg-blue-600"
-              }`}
-            >
-              Sign Up
-            </button>
-          </div>
+          {/* Conditional rendering based on login status */}
+          {isLoggedIn ? (
+            <div className="flex items-center gap-4">
+              {user && (
+                <span className="hidden sm:inline">
+                  Hi, {user.email?.split('@')[0] || 'User'}
+                </span>
+              )}
+              <button
+                onClick={dashboardToggle}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  isDarkMode ? "bg-blue-600 hover:bg-blue-700" : "bg-blue-500 hover:bg-blue-600"
+                } text-white`}
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={handleLogout}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-100"
+                }`}
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <button
+                onClick={signinToggle}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-100"
+                }`}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={signupToggle}
+                className={`px-4 py-2 rounded-lg font-medium text-white transition-all duration-200 ${
+                  isDarkMode ? "bg-blue-600 hover:bg-blue-700" : "bg-blue-500 hover:bg-blue-600"
+                }`}
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

@@ -68,8 +68,10 @@ export default function App() {
         <Route path="/forgotpassword" element={<ForgotPassword/>} />
         <Route path="/resetpassword" element={<ResetPassword/>} />
       </Routes>
+     
+      <FloatingCTA onShowVideoDemo={handleShowVideoDemo} /> 
+      <Hero ref={HeroRef} showVideoModal={showVideoModal} setShowVideoModal={setShowVideoModal} />
       <Footer />
-      <FloatingCTA onShowVideoDemo={handleShowVideoDemo} />
     </div>
   );
 }

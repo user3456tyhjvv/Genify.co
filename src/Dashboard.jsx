@@ -13,7 +13,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   
   // State management
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("Dashboard");
   const [darkMode, setDarkMode] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [generating, setGenerating] = useState(false);
